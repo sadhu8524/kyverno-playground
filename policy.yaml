@@ -1,0 +1,23 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: default-infra-log-label
+  annotations:
+    pod-policies.kyverno.io/autogen-controllers: none
+spec:
+  background: false
+  rules:
+    - name: default-log-type-on-pod-creation
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              operations: [CREATE]
+              namespaceSelector:
+                matchLabels:
+                  infra-logging: enabled
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              +(log-type): infrastructure

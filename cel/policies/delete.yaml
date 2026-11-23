@@ -1,0 +1,22 @@
+apiVersion: policies.kyverno.io/v1alpha1
+kind: DeletingPolicy
+metadata:
+  name: lab-remove-disposable-config
+spec:
+  schedule: "*/1 * * * *"
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: cel-demo
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["*"]
+        resources: ["configmaps"]
+  conditions:
+    - name: disposable-fixture
+      expression: >-
+        object.metadata.namespace == 'cel-demo' &&
+        object.metadata.name == 'cleanup-sample' &&
+        has(object.metadata.labels) && 'disposable' in object.metadata.labels &&
+        object.metadata.labels['disposable'] == 'true'

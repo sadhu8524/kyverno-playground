@@ -1,0 +1,28 @@
+apiVersion: policies.kyverno.io/v1alpha1
+kind: GeneratingPolicy
+metadata:
+  name: lab-generate-log-settings
+spec:
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: cel-demo
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["configmaps"]
+  matchConditions:
+    - name: bootstrap-request
+      expression: "object.metadata.name == 'logging-bootstrap'"
+  variables:
+    - name: settings
+      expression: |
+        [{
+          "apiVersion": dyn("v1"),
+          "kind": dyn("ConfigMap"),
+          "metadata": dyn({"name": "logging-settings", "namespace": "cel-demo"}),
+          "data": dyn({"format": "json"})
+        }]
+  generate:
+    - expression: generator.Apply("cel-demo", variables.settings)
